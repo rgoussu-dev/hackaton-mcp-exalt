@@ -1,3 +1,9 @@
+---
+name: RELEASE-RADAR
+description: This custom agent generates a Release Radar report for a given GitHub repository and release, summarizing what shipped, the associated risks, and the health of the delivery process.
+argument-hint: Github Repository URL + release/tag, or Release URL, or Github Repository URL only (latest release)
+# tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo'] # specify the tools this agent can use. If not set, all enabled tools are allowed.
+---
 # Agent Release Radar
 
 > Tool-agnostic agent instructions. Read by Claude Code (via `CLAUDE.md`), GitHub Copilot agent mode and Codex CLI.
