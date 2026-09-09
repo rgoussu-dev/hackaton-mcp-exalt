@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rapport de release — toeverything/AFFiNE</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%80%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #faf9f6;
+    --bg-raised: #f2f0eb;
+    --fg: #1c1b19;
+    --muted: #6b6660;
+    --rule: #ddd8d0;
+    --added: #2f7a4d;
+    --added-bg: #eaf3ee;
+    --removed: #a1462e;
+    --removed-bg: #f6ebe8;
+    --flag: #a5750e;
+    --flag-bg: #faf1de;
+    --link: #2f4f7a;
+    --font-serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17161a;
+      --bg-raised: #201f24;
+      --fg: #e9e6e0;
+      --muted: #9c968d;
+      --rule: #35333a;
+      --added: #5cbf8b;
+      --added-bg: #16241d;
+      --removed: #e08a6d;
+      --removed-bg: #2a1c18;
+      --flag: #e0b94f;
+      --flag-bg: #2a2313;
+      --link: #8fb3e0;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  a { color: var(--link); }
+  code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+  h1, h2, h3 { font-family: var(--font-serif); font-weight: 600; letter-spacing: -0.01em; }
+  h2 {
+    font-size: 1.3rem;
+    margin: 3rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  h2 .count { font-family: var(--font-sans); font-weight: 400; color: var(--muted); font-size: 0.85rem; }
+
+  .report-header .kicker {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .report-header h1 {
+    font-size: 2rem;
+    margin: 0.25rem 0 0.25rem;
+  }
+  .report-header .generated {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .timeline {
+    display: flex;
+    align-items: center;
+    margin: 2.5rem 0 1rem;
+  }
+  .timeline .point { flex: 0 0 auto; text-align: center; width: 160px; }
+  .timeline .point .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--fg);
+    margin: 0 auto 10px;
+  }
+  .timeline .point.current .dot { background: var(--added); }
+  .timeline .point .tag { font-family: var(--font-mono); font-size: 0.95rem; }
+  .timeline .point .date { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .timeline .line { flex: 1 1 auto; height: 1px; background: var(--rule); position: relative; top: -21px; }
+  .timeline .point.first-history .tag { font-style: italic; color: var(--muted); }
+
+  .summary {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 0 1rem;
+  }
+  .summary .stat {
+    flex: 1 1 120px;
+    padding: 0 20px 12px 0;
+    border-left: 1px solid var(--rule);
+    padding-left: 20px;
+    margin-bottom: 12px;
+  }
+  .summary .stat:first-child { border-left: none; padding-left: 0; }
+  .summary .stat .value {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 1.7rem;
+    line-height: 1.1;
+  }
+  .summary .stat .value.flagged { color: var(--flag); }
+  .summary .stat .label {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .changelog-group { margin-bottom: 1.5rem; }
+  .changelog-group h3 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 0.5rem;
+  }
+  .changelog-group ul { list-style: none; margin: 0; padding: 0; }
+  .changelog-group li {
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .changelog-group li:last-child { border-bottom: none; }
+  .changelog-group .ref { color: var(--muted); margin-left: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  td.num, th.num { text-align: right; font-family: var(--font-mono); }
+
+  .component-bar { display: flex; height: 8px; border-radius: 2px; overflow: hidden; min-width: 120px; background: var(--bg-raised); }
+  .component-bar .add { background: var(--added); }
+  .component-bar .del { background: var(--removed); }
+
+  .breaking-item {
+    border-left: 3px solid var(--flag);
+    background: var(--flag-bg);
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 0 4px 4px 0;
+  }
+  .breaking-item .source { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+  .breaking-item .migration { font-size: 0.87rem; margin-top: 6px; }
+
+  .artifact-list { list-style: none; margin: 0; padding: 0; }
+  .artifact-list li { padding: 5px 0; border-bottom: 1px dotted var(--rule); font-family: var(--font-mono); font-size: 0.88rem; }
+  .artifact-list .release-tag { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; color: var(--muted); margin-left: 8px; }
+
+  .empty-note { color: var(--muted); font-style: italic; font-size: 0.9rem; }
+  .pill { font-family: var(--font-mono); font-size: 0.78rem; padding: 1px 6px; border-radius: 3px; }
+  .pill.yes { background: var(--added-bg); color: var(--added); }
+  .pill.no { background: var(--bg-raised); color: var(--muted); }
+  .rate-bad { color: var(--removed); font-weight: 600; }
+  ul.assumptions { padding-left: 1.2rem; font-size: 0.88rem; color: var(--muted); }
+
+  @media (max-width: 640px) {
+    main { padding: 32px 16px 64px; }
+    .timeline { flex-direction: column; align-items: stretch; }
+    .timeline .line { display: none; }
+    .timeline .point { width: auto; margin-bottom: 12px; }
+    .summary .stat { flex: 1 1 45%; border-left: none !important; padding-left: 0 !important; }
+    table { display: block; overflow-x: auto; white-space: nowrap; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <header class="report-header">
+    <div class="kicker">Rapport de release</div>
+    <h1>toeverything/AFFiNE</h1>
+    <div class="generated">Généré le 2026-09-09</div>
+
+    <div class="timeline">
+      <div class="point">
+        <div class="dot"></div>
+        <div class="tag">v0.27.3</div>
+        <div class="date">23 juillet 2026</div>
+      </div>
+      <div class="line"></div>
+      <div class="point current">
+        <div class="dot"></div>
+        <div class="tag">v0.27.4</div>
+        <div class="date">18 août 2026</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="summary-section">
+    <h2>Résumé exécutif</h2>
+    <div class="summary">
+      <div class="stat">
+        <span class="value">46 959 / 58 848</span>
+        <span class="label">Lignes +/-</span>
+      </div>
+      <div class="stat">
+        <span class="value">1 357</span>
+        <span class="label">Fichiers modifiés</span>
+      </div>
+      <div class="stat">
+        <span class="value flagged">3</span>
+        <span class="label">Breaking changes</span>
+      </div>
+      <div class="stat">
+        <span class="value">non disponible</span>
+        <span class="label">Taux de succès build</span>
+      </div>
+      <div class="stat">
+        <span class="value">47.3&nbsp;%</span>
+        <span class="label">PR assistées par agent</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Changelog</h2>
+
+    <div class="changelog-group">
+      <h3>Breaking</h3>
+      <p class="empty-note">Aucun commit/PR de cet intervalle ne porte un marqueur "breaking" explicite — les breaking changes de cette release sont documentés dans les notes de release elles-mêmes (voir section dédiée ci-dessous).</p>
+    </div>
+
+    <div class="changelog-group">
+      <h3>Features</h3>
+      <ul>
+        <li>feat(server): improve doc gc<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15329">#15329</a></li>
+        <li>feat: improve mac dock behavior<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15334">#15334</a></li>
+        <li>feat(editor): improve select perf<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15353">#15353</a></li>
+        <li>feat(server): improve doc gc (follow-up)<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15363">#15363</a></li>
+        <li>feat(server): improve blob sync<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15367">#15367</a></li>
+        <li>feat(server): update model list (GPT 5.6 / Gemini 3.7)<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15375">#15375</a></li>
+        <li>feat(editor): add permanent global toggle for code block line numbers<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15381">#15381</a></li>
+        <li>feat(server): improve ci build<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15386">#15386</a></li>
+        <li>feat(i18n): update German translation<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15412">#15412</a></li>
+        <li>feat(server): converge legacy compatibility (BYOK/config)<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15426">#15426</a></li>
+        <li>feat(core): improve byok editing<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15427">#15427</a></li>
+        <li>feat(server): improve context management<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15448">#15448</a></li>
+        <li>feat: update schema &amp; bump deps<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15455">#15455</a></li>
+        <li>feat(core): improve reconnect handling<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15458">#15458</a></li>
+        <li>feat: add Render Blueprint for one-click self-host<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15478">#15478</a></li>
+        <li>feat(server): realtime handle &amp; migration<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15487">#15487</a></li>
+      </ul>
+    </div>
+
+    <div class="changelog-group">
+      <h3>Fixes</h3>
+      <ul>
+        <li>fix(core): onenote import<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15332">#15332</a></li>
+        <li>fix(mobile): popover styles<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15351">#15351</a></li>
+        <li>fix(mobile): mobile keyboard padding<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15365">#15365</a></li>
+        <li>fix(editor): test stability<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15377">#15377</a></li>
+        <li>Fix: date picker allows dates before 1970 (min date 1900)<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15436">#15436</a></li>
+        <li>fix(core): exclude trashed docs from journal lookups<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15461">#15461</a></li>
+        <li>fix(server): missing feature flag<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15473">#15473</a></li>
+        <li>fix(server): blob upload<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15474">#15474</a></li>
+        <li>fix(core): transcript cannot retry<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15476">#15476</a></li>
+        <li>fix(server): storage prefix url<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15477">#15477</a></li>
+        <li>fix(server): transcript key &amp; bump models<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15485">#15485</a></li>
+      </ul>
+    </div>
+
+    <div class="changelog-group">
+      <h3>Chores</h3>
+      <ul>
+        <li>chore: update config template<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15344">#15344</a></li>
+        <li>chore: bump up electron version to v39.8.10 [SECURITY]<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15441">#15441</a></li>
+        <li>chore: bump up mermaid version to v11.16.1 [SECURITY]<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15443">#15443</a></li>
+        <li>chore: bump up nanoid version to v5.1.16 [SECURITY]<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15454">#15454</a></li>
+        <li>chore: migrate oxlint &amp; oxfmt<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15464">#15464</a></li>
+        <li>chore: bump typescript 7<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pull/15465">#15465</a></li>
+      </ul>
+    </div>
+
+    <div class="changelog-group">
+      <h3>Autres</h3>
+      <ul>
+        <li>25 PR automatisées de mise à jour de dépendances (renovate[bot]) — détail dans la section Dépendances<a class="ref mono" href="https://github.com/toeverything/AFFiNE/pulls?q=is%3Apr+is%3Amerged+label%3Adependencies+merged%3A2026-07-23..2026-08-18">renovate</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Stats de code</h2>
+    <table>
+      <thead>
+        <tr><th>Composant</th><th class="num">+</th><th class="num">-</th><th>Répartition</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">server</td>
+          <td class="num" style="color:var(--added)">+43761</td>
+          <td class="num" style="color:var(--removed)">-55824</td>
+          <td><div class="component-bar"><div class="add" style="width:44%"></div><div class="del" style="width:56%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">core</td>
+          <td class="num" style="color:var(--added)">+2139</td>
+          <td class="num" style="color:var(--removed)">-2323</td>
+          <td><div class="component-bar"><div class="add" style="width:48%"></div><div class="del" style="width:52%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">dependencies</td>
+          <td class="num" style="color:var(--added)">+426</td>
+          <td class="num" style="color:var(--removed)">-438</td>
+          <td><div class="component-bar"><div class="add" style="width:49%"></div><div class="del" style="width:51%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">electron</td>
+          <td class="num" style="color:var(--added)">+219</td>
+          <td class="num" style="color:var(--removed)">-133</td>
+          <td><div class="component-bar"><div class="add" style="width:62%"></div><div class="del" style="width:38%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">server-native</td>
+          <td class="num" style="color:var(--added)">+152</td>
+          <td class="num" style="color:var(--removed)">-28</td>
+          <td><div class="component-bar"><div class="add" style="width:84%"></div><div class="del" style="width:16%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">docs</td>
+          <td class="num" style="color:var(--added)">+74</td>
+          <td class="num" style="color:var(--removed)">-0</td>
+          <td><div class="component-bar"><div class="add" style="width:100%"></div><div class="del" style="width:0%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">dev</td>
+          <td class="num" style="color:var(--added)">+69</td>
+          <td class="num" style="color:var(--removed)">-69</td>
+          <td><div class="component-bar"><div class="add" style="width:50%"></div><div class="del" style="width:50%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">i18n</td>
+          <td class="num" style="color:var(--added)">+69</td>
+          <td class="num" style="color:var(--removed)">-0</td>
+          <td><div class="component-bar"><div class="add" style="width:100%"></div><div class="del" style="width:0%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">test</td>
+          <td class="num" style="color:var(--added)">+40</td>
+          <td class="num" style="color:var(--removed)">-23</td>
+          <td><div class="component-bar"><div class="add" style="width:63%"></div><div class="del" style="width:37%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">component</td>
+          <td class="num" style="color:var(--added)">+9</td>
+          <td class="num" style="color:var(--removed)">-9</td>
+          <td><div class="component-bar"><div class="add" style="width:50%"></div><div class="del" style="width:50%"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">other</td>
+          <td class="num" style="color:var(--added)">+1</td>
+          <td class="num" style="color:var(--removed)">-1</td>
+          <td><div class="component-bar"><div class="add" style="width:50%"></div><div class="del" style="width:50%"></div></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Breaking changes</h2>
+    <div class="breaking-item">
+      <div>La fonctionnalité BYOK (Bring-Your-Own-Key) pour les fournisseurs IA reste expérimentale et peut nécessiter une reconfiguration lors de la mise à jour. Nouveau dans les notes de la v0.27.4 (absent de la v0.27.3) ; sous-tendu par le travail de refonte BYOK/legacy-compat de ce cycle.</div>
+      <div class="source mono">Notes de release v0.27.4 ; PR #15426 (feat(server): converge legacy compatibility), PR #15427 (feat(core): improve byok editing), PR #15448 (feat(server): improve context management)</div>
+      <div class="migration">Vérifier, et reconfigurer si nécessaire, les fournisseurs BYOK après la mise à jour.</div>
+    </div>
+    <div class="breaking-item">
+      <div>Reporté depuis les releases précédentes (inchangé en v0.27.4) : la compatibilité de protocole client/serveur est verrouillée — un serveur en v0.27+ n'accepte que des clients en v0.26+, et un client en v0.27+ exige un serveur en v0.27+.</div>
+      <div class="source mono">Notes de release v0.27.4 et v0.27.3 (formulation identique)</div>
+      <div class="migration">Mettre à jour serveur auto-hébergé et clients ensemble, en respectant ce plancher de version.</div>
+    </div>
+    <div class="breaking-item">
+      <div>Reporté depuis les releases précédentes (inchangé en v0.27.4) : depuis la v0.27 serveur, les variables d'environnement ne sont plus la source de configuration privilégiée et certaines ont été supprimées au profit de config.json.</div>
+      <div class="source mono">Notes de release v0.27.4 et v0.27.3 (formulation identique)</div>
+      <div class="migration">Migrer la configuration auto-hébergée vers config.json — voir https://docs.affine.pro/self-host-affine/install/configuration</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dépendances modifiées</h2>
+    <table>
+      <thead>
+        <tr><th>Package</th><th>Écosystème</th><th>Avant</th><th>Après</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">apollographql/apollo-ios</td><td>swift</td><td class="mono">1.25.4</td><td class="mono">1.25.7</td></tr>
+        <tr><td class="mono">@nestjs/common, @nestjs/core, @nestjs/platform-express, @nestjs/platform-socket.io, @nestjs/websockets</td><td>npm</td><td class="mono">11.1.27</td><td class="mono">11.1.28</td></tr>
+        <tr><td class="mono">@nestjs/swagger</td><td>npm</td><td class="mono">11.4.4</td><td class="mono">11.4.6</td></tr>
+        <tr><td class="mono">@opentelemetry/instrumentation-graphql, @opentelemetry/instrumentation-ioredis</td><td>npm</td><td class="mono">0.67.0</td><td class="mono">0.69.0</td></tr>
+        <tr><td class="mono">@opentelemetry/instrumentation-nestjs-core</td><td>npm</td><td class="mono">0.65.0</td><td class="mono">0.67.0</td></tr>
+        <tr><td class="mono">@opentelemetry/instrumentation-socket.io</td><td>npm</td><td class="mono">0.66.0</td><td class="mono">0.68.0</td></tr>
+        <tr><td class="mono">@opentelemetry/semantic-conventions</td><td>npm</td><td class="mono">1.41.1</td><td class="mono">1.43.0</td></tr>
+        <tr><td class="mono">dompurify</td><td>npm</td><td class="mono">3.4.11</td><td class="mono">3.4.12 [SECURITY]</td></tr>
+        <tr><td class="mono">Node.js</td><td>runtime (.nvmrc)</td><td class="mono">22.23.1</td><td class="mono">22.23.2</td></tr>
+        <tr><td class="mono">js-yaml</td><td>npm</td><td class="mono">^4.2.0</td><td class="mono">^5.0.0 [SECURITY]</td></tr>
+        <tr><td class="mono">oxlint</td><td>npm</td><td class="mono">1.68.0</td><td class="mono">1.76.0</td></tr>
+        <tr><td class="mono">RevenueCat/purchases-ios-spm</td><td>swift</td><td class="mono">5.76.0</td><td class="mono">5.83.0</td></tr>
+        <tr><td class="mono">Rust toolchain</td><td>rust-toolchain.toml</td><td class="mono">1.96.0</td><td class="mono">1.97.1</td></tr>
+        <tr><td class="mono">@atlaskit/pragmatic-drag-and-drop</td><td>npm</td><td class="mono">^1.7.7</td><td class="mono">^2.0.0</td></tr>
+        <tr><td class="mono">@atlaskit/pragmatic-drag-and-drop-auto-scroll</td><td>npm</td><td class="mono">^2.1.2</td><td class="mono">^3.0.0</td></tr>
+        <tr><td class="mono">@atlaskit/pragmatic-drag-and-drop-hitbox</td><td>npm</td><td class="mono">^1.1.0</td><td class="mono">^2.0.0</td></tr>
+        <tr><td class="mono">@napi-rs/simple-git</td><td>npm</td><td class="mono">^0.1.22</td><td class="mono">^1.0.0</td></tr>
+        <tr><td class="mono">@slack/web-api</td><td>npm</td><td class="mono">^7.15.1</td><td class="mono">^8.0.0</td></tr>
+        <tr><td class="mono">actions/cache</td><td>github-actions</td><td class="mono">v5</td><td class="mono">v6</td></tr>
+        <tr><td class="mono">actions/checkout</td><td>github-actions</td><td class="mono">v6</td><td class="mono">v7</td></tr>
+        <tr><td class="mono">actions/labeler</td><td>github-actions</td><td class="mono">v6</td><td class="mono">v7</td></tr>
+        <tr><td class="mono">actions/setup-go</td><td>github-actions</td><td class="mono">v6</td><td class="mono">v7</td></tr>
+        <tr><td class="mono">actions/setup-node</td><td>github-actions</td><td class="mono">v6</td><td class="mono">v7</td></tr>
+        <tr><td class="mono">actions/setup-python</td><td>github-actions</td><td class="mono">v6</td><td class="mono">v7</td></tr>
+        <tr><td class="mono">electron</td><td>npm</td><td class="mono">39.8.6</td><td class="mono">39.8.10 [SECURITY]</td></tr>
+        <tr><td class="mono">mermaid (+ dompurify, katex, cytoscape, dayjs transitifs)</td><td>npm</td><td class="mono">11.15.0</td><td class="mono">11.16.1 [SECURITY]</td></tr>
+        <tr><td class="mono">nanoid</td><td>npm</td><td class="mono">3.3.16 / 5.1.6</td><td class="mono">3.3.18 / 5.1.16 [SECURITY]</td></tr>
+        <tr><td class="mono">@nestjs/common, @nestjs/core, @nestjs/platform-express, @nestjs/platform-socket.io, @nestjs/websockets</td><td>npm</td><td class="mono">11.1.28</td><td class="mono">11.1.29</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Artefacts</h2>
+    <ul class="artifact-list">
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-linux-x64.appimage">affine-0.27.4-stable-linux-x64.appimage</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-linux-x64.deb">affine-0.27.4-stable-linux-x64.deb</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-linux-x64.flatpak">affine-0.27.4-stable-linux-x64.flatpak</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-linux-x64.zip">affine-0.27.4-stable-linux-x64.zip</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-macos-arm64.dmg">affine-0.27.4-stable-macos-arm64.dmg</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-macos-arm64.zip">affine-0.27.4-stable-macos-arm64.zip</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-macos-x64.dmg">affine-0.27.4-stable-macos-x64.dmg</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-macos-x64.zip">affine-0.27.4-stable-macos-x64.zip</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-windows-arm64.exe">affine-0.27.4-stable-windows-arm64.exe</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-windows-arm64.nsis.exe">affine-0.27.4-stable-windows-arm64.nsis.exe</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-windows-x64.exe">affine-0.27.4-stable-windows-x64.exe</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/affine-0.27.4-stable-windows-x64.nsis.exe">affine-0.27.4-stable-windows-x64.nsis.exe</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/config.json.example">config.json.example</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/config.schema.json">config.schema.json</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.4/docker-compose.yml">docker-compose.yml</a><span class="release-tag">current</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-linux-x64.appimage">affine-0.27.3-stable-linux-x64.appimage</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-linux-x64.deb">affine-0.27.3-stable-linux-x64.deb</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-linux-x64.flatpak">affine-0.27.3-stable-linux-x64.flatpak</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-linux-x64.zip">affine-0.27.3-stable-linux-x64.zip</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-macos-arm64.dmg">affine-0.27.3-stable-macos-arm64.dmg</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-macos-arm64.zip">affine-0.27.3-stable-macos-arm64.zip</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-macos-x64.dmg">affine-0.27.3-stable-macos-x64.dmg</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-macos-x64.zip">affine-0.27.3-stable-macos-x64.zip</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-windows-arm64.exe">affine-0.27.3-stable-windows-arm64.exe</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/affine-0.27.3-stable-windows-x64.exe">affine-0.27.3-stable-windows-x64.exe</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/config.schema.json">config.schema.json</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/docker-compose.yml">docker-compose.yml</a><span class="release-tag">previous</span></li>
+      <li><a href="https://github.com/toeverything/AFFiNE/releases/download/v0.27.3/default.env.example">default.env.example</a><span class="release-tag">previous</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Stats de build</h2>
+    <p class="empty-note">Stats de build non disponibles via ce serveur MCP.</p>
+  </section>
+
+  <section>
+    <h2>Stats de PR</h2>
+    <div class="summary" style="margin-bottom:1rem;">
+      <div class="stat">
+        <span class="value mono">7.61 h</span>
+        <span class="label">Délai médian d'approbation</span>
+      </div>
+      <div class="stat">
+        <span class="value mono">11.70 h</span>
+        <span class="label">Délai moyen d'approbation</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>PR</th><th>Titre</th><th>Auteur</th><th class="num">Délai (h)</th><th>Agent-assistée</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/13687">#13687</a></td><td>chore: bump up apollographql/apollo-ios version to v1.25.7</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15276">#15276</a></td><td>chore: bump up nestjs</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15323">#15323</a></td><td>chore: bump up opentelemetry</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15326">#15326</a></td><td>chore: bump up dompurify version to v3.4.12 [SECURITY]</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15329">#15329</a></td><td>feat(server): improve doc gc</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15332">#15332</a></td><td>fix(core): onenote import</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15334">#15334</a></td><td>feat: improve mac dock behavior</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15344">#15344</a></td><td>chore: update config template</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15351">#15351</a></td><td>fix(mobile): popover styles</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15353">#15353</a></td><td>feat(editor): improve select perf</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15363">#15363</a></td><td>feat(server): improve doc gc</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15365">#15365</a></td><td>fix(mobile): mobile keyboard padding</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15367">#15367</a></td><td>feat(server): improve blob sync</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15375">#15375</a></td><td>feat(server): update model list</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15377">#15377</a></td><td>fix(editor): test stability</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15381">#15381</a></td><td>feat(editor): add permanent global toggle for code block line numbers</td><td class="mono">devansh9837</td><td class="num mono">6.22</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15384">#15384</a></td><td>chore: bump up Node.js to v22.23.2</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15385">#15385</a></td><td>chore: bump up js-yaml version to v5 [SECURITY]</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15386">#15386</a></td><td>feat(server): improve ci build</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15387">#15387</a></td><td>chore: bump up oxlint version to v1.76.0</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15388">#15388</a></td><td>chore: bump up RevenueCat/purchases-ios-spm version</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15389">#15389</a></td><td>chore: bump up Rust to v1.97.1</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15393">#15393</a></td><td>chore: bump up RevenueCat/purchases-ios-spm version</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15394">#15394</a></td><td>chore: bump up @atlaskit/pragmatic-drag-and-drop version to v2</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15396">#15396</a></td><td>chore: bump up @atlaskit/pragmatic-drag-and-drop-auto-scroll version to v3</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15397">#15397</a></td><td>chore: bump up @atlaskit/pragmatic-drag-and-drop-hitbox version to v2</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15401">#15401</a></td><td>chore: bump up @napi-rs/simple-git version to v1</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15405">#15405</a></td><td>chore: bump up @slack/web-api version to v8</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15406">#15406</a></td><td>chore: bump up actions/cache action to v6</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15408">#15408</a></td><td>chore: bump up actions/checkout action to v7</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15409">#15409</a></td><td>chore: bump up actions/labeler action to v7</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15410">#15410</a></td><td>chore: bump up actions/setup-go action to v7</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15411">#15411</a></td><td>chore: bump up actions/setup-node action to v7</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15412">#15412</a></td><td>feat(i18n): update German translation</td><td class="mono">steffenrapp</td><td class="num mono">25.87</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15416">#15416</a></td><td>chore: bump up actions/setup-python action to v7</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15426">#15426</a></td><td>feat(server): converge legacy compatibility</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15427">#15427</a></td><td>feat(core): improve byok editing</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15436">#15436</a></td><td>Fix/issue 15435 (date picker min date)</td><td class="mono">S-A-Adit</td><td class="num mono">16.43</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15441">#15441</a></td><td>chore: bump up electron version to v39.8.10 [SECURITY]</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15443">#15443</a></td><td>chore: bump up mermaid version to v11.16.1 [SECURITY]</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15448">#15448</a></td><td>feat(server): improve context management</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15454">#15454</a></td><td>chore: bump up nanoid version to v5.1.16 [SECURITY]</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15455">#15455</a></td><td>feat: update schema &amp; bump deps</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15457">#15457</a></td><td>chore: bump up nestjs</td><td class="mono">renovate[bot]</td><td class="num mono">non disponible</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15458">#15458</a></td><td>feat(core): improve reconnect handling</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15461">#15461</a></td><td>fix(core): exclude trashed docs from journal lookups</td><td class="mono">Axl-Lvy</td><td class="num mono">2.37</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15464">#15464</a></td><td>chore: migrate oxlint &amp; oxfmt</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15465">#15465</a></td><td>chore: bump typescript 7</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15473">#15473</a></td><td>fix(server): missing feature flag</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15474">#15474</a></td><td>fix(server): blob upload</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15476">#15476</a></td><td>fix(core): transcript cannot retry</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15477">#15477</a></td><td>fix(server): storage prefix url</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15478">#15478</a></td><td>feat: add Render Blueprint for one-click self-host</td><td class="mono">Ho1yShif</td><td class="num mono">7.61</td><td><span class="pill yes">Oui</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15485">#15485</a></td><td>fix(server): transcript key &amp; bump models</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+        <tr><td class="mono"><a href="https://github.com/toeverything/AFFiNE/pull/15487">#15487</a></td><td>feat(server): realtime handle &amp; migration</td><td class="mono">darkskygit</td><td class="num mono">non disponible</td><td><span class="pill no">Non</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Méthodologie &amp; hypothèses</h2>
+    <p style="font-size:0.88rem;color:var(--muted)">
+      Données récupérées via le serveur MCP GitHub. Règles de classification issues d'AGENTS.md /
+      SKILL.md du dépôt cible lorsqu'ils existent, sinon des heuristiques par défaut de l'agent
+      <code>github-release-report</code>.
+    </p>
+    <ul class="assumptions">
+      <li>Aucun AGENTS.md n'a été trouvé à la racine (ni dans .github/ ou docs/) de toeverything/AFFiNE ; une recherche floue n'a fait correspondre qu'un AGENTS.md sans rapport, situé dans packages/frontend/apps/ios/. Les heuristiques par défaut (section 5 du prompt agent) ont été utilisées pour la détection des breaking changes, le mapping de composants, la détection des bots, les manifestes de dépendances et la politique de pré-releases.</li>
+      <li>La release précédente retenue est v0.27.3 (publiée le 2026-07-23), la release non-pré-release et non-draft la plus proche avant v0.27.4 (publiée le 2026-08-18). Les pré-releases canary/beta intercalées (par ex. v0.27.5-beta.1 et plusieurs tags v2026.x.x-canary.*) ont été exclues conformément à la politique par défaut.</li>
+      <li>L'attribution par composant utilise les labels de PR propres au dépôt AFFiNE (app:server, app:electron, app:core, mod:native, mod:server-native, mod:i18n, mod:infra, mod:dev, mod:component, dependencies, rust, test, docs) plutôt qu'une heuristique par dossier, car les PR de ce monorepo touchent couramment des fichiers dans de nombreux dossiers. Quand une PR porte plusieurs de ces labels, un ordre de priorité fixe (server &gt; electron &gt; core &gt; native &gt; server-native &gt; i18n &gt; infra &gt; dev &gt; component &gt; dependencies &gt; rust &gt; test &gt; docs &gt; other) détermine un composant principal unique, ce qui peut sous-compter des zones secondaires également touchées.</li>
+      <li>Le délai d'approbation des PR n'est pertinent que pour les 5 PR de contributeurs externes non-mainteneurs (#15381, #15412, #15436, #15461, #15478), chacune ayant nécessité une revue humaine explicite APPROVED du mainteneur (darkskygit) avant fusion. Les 50 autres PR (30 de darkskygit lui-même, plus 25 PR renovate[bot]) ont été auto-fusionnées avec uniquement des commentaires automatisés de CodeRabbit, sans événement d'approbation humaine distinct ; leur délai est donc marqué "non disponible" et exclu de la moyenne/médiane.</li>
+      <li>Le marqueur "assistée par agent" suit l'heuristique par défaut : vrai pour les 25 PR de renovate[bot], plus la PR #15478 dont la description contient une mention explicite "Generated with Claude Code". coderabbitai[bot] n'apparaît que comme relecteur/commentateur automatisé sur presque toutes les PR, jamais comme auteur, et ne déclenche donc pas ce marqueur à lui seul.</li>
+      <li>Les totaux de lignes pour deux grosses PR de dépendances portant uniquement sur des lockfiles (#15443 mermaid, #15457 second bump nestjs) sont approximatifs, comptés manuellement à partir des hunks de diff unifié renvoyés par l'outil MCP, faute d'un total agrégé unique pour ces entrées.</li>
+      <li>build_stats est indisponible : aucun outil MCP GitHub exposant les workflow runs / jobs CI n'était disponible dans cette session ; les statistiques de build sont donc omises conformément à la règle de non-invention de métriques.</li>
+      <li>Le changelog liste individuellement les 30 PR hors dépendances (features/fixes/chores) ainsi que les 5 mises à jour de dépendances signalées [SECURITY] ; les ~20 autres mises à jour de dépendances routinières de renovate[bot] sont regroupées en une seule entrée "Autres" et détaillées individuellement dans la section Dépendances.</li>
+      <li>AFFiNE intègre les PR par squash-merge sur la branche canary ; la liste des PR fusionnées sur l'intervalle (du 2026-07-23, date de publication de v0.27.3, au 2026-08-18, date de publication de v0.27.4) a donc été utilisée comme source principale du changelog plutôt qu'une énumération commit par commit, chaque PR fusionnée correspondant à un point d'intégration.</li>
+    </ul>
+  </section>
+
+</main>
+</body>
+</html>
