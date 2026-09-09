@@ -124,6 +124,8 @@ For the PRs collected in Job 2:
 
 ### Job 7 — Build the HTML report
 
+Before generating the report, load and use the [Build Health Report skill](../../.github/skills/build-health-report/SKILL.md) for the HTML report structure, metric presentation, and risk-assessment guidance. The Release Radar requirements in this file take precedence if they conflict.
+
 Write **one** self-contained HTML file (inline CSS, inline SVG or inline JS charts only, no external
 network calls, no CDN). It must open from disk in any browser. Sections, in this order:
 
